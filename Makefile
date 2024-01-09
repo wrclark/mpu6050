@@ -1,5 +1,5 @@
 CC=gcc
-CFLAG=-O0 -std=c89 -I.
+CFLAG=-O0 -std=c89 -Wall -Wextra -W -pedantic -I.
 CFILES=$(wildcard *.c)
 BIN=mpu6050
 
