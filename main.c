@@ -8,27 +8,22 @@
 #include "i2c.h"
 
 int main() {
-
-    uint8_t id;
     uint8_t gyro, acc;
     uint8_t int_status = 0;
     uint8_t data[6];
     int16_t gx, gy, gz;
-    int16_t ax, ay, az;
     float lsb_conv_gyro;
-    float lsb_conv_acc;
     int err = 0;
+
+    mpu6050_t mpu6050;
+    mpu6050.dev.init = i2c_init;
+    mpu6050.dev.deinit = i2c_deinit;
+    mpu6050.dev.read = i2c_read;
+    mpu6050.dev.write = i2c_write;
+    mpu6050.dev.sleep = usleep;
     
-    if (i2c_init()) {
+    if (mpu6050_init(&mpu6050)) {
         exit(1);
-    }
-
-    if (i2c_read(REG_WHO_AM_I, &id, 1)) {
-        exit(1);
-    }
-
-    if (id == 0x68) {
-        puts("Found MPU-6050");
     }
 
     /* reset all signal paths */
@@ -66,7 +61,6 @@ int main() {
     }
 
     acc = MPU6050_ACC_FS_2G << 3;
-    lsb_conv_acc = 16384.f;
     if (i2c_write(REG_ACCEL_CONFIG, acc)) {
         exit(1);
     }
@@ -95,23 +89,13 @@ LOOP:
     err = 0;
     int_status = 0;
 
-    do {
-        err |= i2c_read(REG_INT_STATUS, &int_status, 1);
-        usleep(1000);
-    } while(!err && !(int_status & 1));
-
-    if (i2c_read(REG_ACCEL_XOUT_H, data, 6)) {
+    if (mpu6050_read_acc(&mpu6050)) {
         exit(1);
     }
 
-    ax = (data[0] << 8 | data[1]);
-    ay = (data[2] << 8 | data[3]);
-    az = (data[4] << 8 | data[5]);
+    printf("[ACC mg] x: %-3d y: %-3d z: %-3d\n",
+        mpu6050.acc.x, mpu6050.acc.y, mpu6050.acc.z);
 
-    printf("[ACCEL g] x: % -3.4f y: %-3.4f z: %-3.4f\n",
-        (float)(ax)/lsb_conv_acc,
-        (float)(ay)/lsb_conv_acc,
-        (float)(az)/lsb_conv_acc);
     
 goto LOOP;
 

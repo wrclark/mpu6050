@@ -15,26 +15,44 @@
 #define MPU6050_ACC_FS_8G    0x02 /* ± 8g */
 #define MPU6050_ACC_FS_16G   0x03 /* ± 16g */
 
-
-struct mpu6050_acc_config {
-    uint8_t range;
-    uint8_t filter;
-};
-
-struct mpu6050_gyro_config {
-    uint8_t range;
-    uint8_t filter;
+struct mpu6050_dev {
+    int (*init)(void);
+    int (*write)(uint8_t reg, uint8_t value);
+    int (*read)(uint8_t reg, uint8_t *dst, uint32_t size);
+    int (*sleep)(uint32_t dur_us);
+    int (*deinit)(void);
 };
 
 struct mpu6050_config {
-    struct mpu6050_gyro_config gyro;
-    struct mpu6050_acc_config  acc;
+    uint8_t gyro;
+    uint8_t acc;
+};
+
+/* 1 lsb = 1 mg (1/1000 g) */
+struct mpu6050_accelerometer {
+    int16_t x;
+    int16_t y;
+    int16_t z;
+};
+
+/* deg / s times 10, so 1 decimal */
+struct mpu6050_gyroscope {
+    int16_t x;
+    int16_t y;
+    int16_t z;
 };
 
 struct mpu6050 {
+    struct mpu6050_dev dev;
     struct mpu6050_config cfg;
+    struct mpu6050_accelerometer acc;
+    struct mpu6050_gyroscope gyro;
 };
 
 typedef struct mpu6050 mpu6050_t;
+
+int mpu6050_init(mpu6050_t *mpu6050);
+int mpu6050_deinit(mpu6050_t *mpu6050);
+int mpu6050_read_acc(mpu6050_t *mpu6050);
 
 #endif
