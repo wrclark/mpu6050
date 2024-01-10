@@ -35,6 +35,8 @@ struct mpu6050_int_enable {
 struct mpu6050_config {
     uint8_t gyro;
     uint8_t acc;
+    uint8_t dlpl; /* digital low-pass filter level [0-7]*/
+    uint8_t sdiv; /* sample rate divider. ~ lpl; lpl=(0,7) => divides 8KHz else 1 KHz*/
     struct mpu6050_int_enable int_enable;
 };
 
@@ -73,5 +75,6 @@ int mpu6050_read_acc(mpu6050_t *mpu6050);
 int mpu6050_read_gyro(mpu6050_t *mpu6050);
 int mpu6050_read_temp(mpu6050_t *mpu6050);
 int mpu6050_read(mpu6050_t *mpu6050);
+int mpu6050_configure(mpu6050_t *mpu6050);
 
 #endif

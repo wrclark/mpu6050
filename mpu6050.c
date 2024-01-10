@@ -86,9 +86,9 @@ int mpu6050_read_gyro(mpu6050_t *mpu6050) {
 
     err |= mpu6050->dev.read(REG_GYRO_XOUT_H, data, 6);
 
-    mpu6050->data.gyro.x = ((int16_t)(data[0] << 8 | data[1]) >> shift);
-    mpu6050->data.gyro.y = ((int16_t)(data[2] << 8 | data[3]) >> shift);
-    mpu6050->data.gyro.z = ((int16_t)(data[4] << 8 | data[5]) >> shift);
+    mpu6050->data.gyro.x = (int16_t)(data[0] << 8 | data[1]) >> shift;
+    mpu6050->data.gyro.y = (int16_t)(data[2] << 8 | data[3]) >> shift;
+    mpu6050->data.gyro.z = (int16_t)(data[4] << 8 | data[5]) >> shift;
 
     return err;
 }
@@ -133,12 +133,58 @@ int mpu6050_read(mpu6050_t *mpu6050) {
     /* 6-7 temp */
     mpu6050->data.temp = (int16_t)(data[6] << 8 | data[7])/34 + 365;
     /* 8-13 gyro */
-    mpu6050->data.gyro.x = ((int16_t)(data[ 8] << 8 | data[ 9]) >> shift_gyro);
-    mpu6050->data.gyro.y = ((int16_t)(data[10] << 8 | data[11]) >> shift_gyro);
-    mpu6050->data.gyro.z = ((int16_t)(data[12] << 8 | data[13]) >> shift_gyro);
+    mpu6050->data.gyro.x = (int16_t)(data[8] << 8 | data[9]) >> shift_gyro;
+    mpu6050->data.gyro.y = (int16_t)(data[10] << 8 | data[11]) >> shift_gyro;
+    mpu6050->data.gyro.z = (int16_t)(data[12] << 8 | data[13]) >> shift_gyro;
 
     return err;
 }
+
+/* write configuration to device */
+/* then sleep for 200 ms */
+int mpu6050_configure(mpu6050_t *mpu6050) {
+    uint8_t sig_path, dlpl, sleep, inten;
+    uint8_t acc, gyro;
+    int err = 0;
+    
+    assert(mpu6050);
+
+    /* enable accel, gyro and temp */
+    sig_path = 0x07;
+
+    /* digital low-pass filter level */
+    dlpl = mpu6050->cfg.dlpl & 0x07;
+
+    /* INT_ENABLE */
+    inten = mpu6050->cfg.int_enable.data_rdy & 1;
+    inten |= (mpu6050->cfg.int_enable.i2c_mst & 1) << 3;
+    inten |= (mpu6050->cfg.int_enable.fifo_overflow & 1) << 4;
+    inten |= (mpu6050->cfg.int_enable.mot & 1) << 6;
+
+    /* PWR_MGMT1 */
+    sleep = 0;
+
+    /* gyro */
+    gyro = (mpu6050->cfg.gyro & 0x02) << 3;
+
+    /* accelerometer */
+    acc = (mpu6050->cfg.acc & 0x02) << 3;
+
+    err |= mpu6050->dev.write(REG_SMPLRT_DIV, mpu6050->cfg.sdiv);
+    err |= mpu6050->dev.write(REG_SIGNAL_PATH_RESET, sig_path);
+    err |= mpu6050->dev.write(REG_INT_ENABLE, inten);
+    err |= mpu6050->dev.write(REG_CONFIG, dlpl);
+    err |= mpu6050->dev.write(REG_ACCEL_CONFIG, acc);
+    err |= mpu6050->dev.write(REG_GYRO_CONFIG, gyro);
+    err |= mpu6050->dev.write(REG_PWR_MGMT1, sleep);
+
+    if (!err) {
+        mpu6050->dev.sleep(200000); /* 200 ms */
+    }
+
+    return err;
+}
+
 
 /* How much to shift down an i16 accel sample depending on full-scale mode set */
 static uint8_t acc_i16_shift(uint8_t fs) {
