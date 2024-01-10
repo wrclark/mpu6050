@@ -21,7 +21,7 @@ int main() {
         exit(1);
     }
 
-    mpu6050.cfg.gyro = MPU6050_GYRO_FS_2000;
+    mpu6050.cfg.gyro = MPU6050_GYRO_FS_250;
     mpu6050.cfg.acc = MPU6050_ACC_FS_2G;
 
     /* reset all signal paths */
@@ -71,11 +71,21 @@ LOOP:
         exit(1);
     }
 
-    printf("[GYRO °/s] x:%1.d  y:%1.d  z:%1.d ",
-        mpu6050.gyro.x, mpu6050.gyro.y, mpu6050.gyro.z);
+    if (mpu6050_read_temp(&mpu6050)) {
+        exit(1);
+    }
 
-    printf("[ACC mg] x: %-3d y: %-3d z: %-3d\n",
-        mpu6050.acc.x, mpu6050.acc.y, mpu6050.acc.z);
+    printf("[GYRO °/s] x:%4.1f  y:%4.1f  z:%4.1f ",
+        (float)mpu6050.data.gyro.x / 10.f,
+        (float)mpu6050.data.gyro.y / 10.f,
+        (float)mpu6050.data.gyro.z / 10.f);
+
+    printf("[ACC g] x:%4.3f  y:%4.3f  z:%4.3f ",
+        (float)mpu6050.data.acc.x / 1000.f,
+        (float)mpu6050.data.acc.y / 1000.f,
+        (float)mpu6050.data.acc.z / 1000.f);
+
+    printf("t:%4.1f°C\n", (float)mpu6050.data.temp / 10.f);
 
     usleep(100 * 1000);
     goto LOOP;

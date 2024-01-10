@@ -42,11 +42,16 @@ struct mpu6050_gyroscope {
     int16_t z;
 };
 
+struct mpu6050_data {
+    struct mpu6050_accelerometer acc;
+    struct mpu6050_gyroscope gyro;
+    int16_t temp;
+};
+
 struct mpu6050 {
     struct mpu6050_dev dev;
     struct mpu6050_config cfg;
-    struct mpu6050_accelerometer acc;
-    struct mpu6050_gyroscope gyro;
+    struct mpu6050_data data;
 };
 
 typedef struct mpu6050 mpu6050_t;
@@ -55,5 +60,6 @@ int mpu6050_init(mpu6050_t *mpu6050);
 int mpu6050_deinit(mpu6050_t *mpu6050);
 int mpu6050_read_acc(mpu6050_t *mpu6050);
 int mpu6050_read_gyro(mpu6050_t *mpu6050);
+int mpu6050_read_temp(mpu6050_t *mpu6050);
 
 #endif
