@@ -23,6 +23,7 @@ int main() {
 
     mpu6050.cfg.gyro = MPU6050_GYRO_FS_250;
     mpu6050.cfg.acc = MPU6050_ACC_FS_2G;
+    mpu6050.cfg.int_enable.data_rdy = 1;
 
     /* reset all signal paths */
     /* enable gyro, acc and temp */
@@ -48,7 +49,7 @@ int main() {
 
     /* enable DATA_RDY interrupt (polling for now) */
     /* active when internal writes to all out data regs are done */
-    if (i2c_write(REG_INT_ENABLE, 0x01)) {
+    if (i2c_write(REG_INT_ENABLE, mpu6050.cfg.int_enable.data_rdy & 1)) {
         exit(1);
     }
 
@@ -63,15 +64,8 @@ int main() {
     usleep(200 * 1000);
 
 LOOP:
-    if (mpu6050_read_gyro(&mpu6050)) {
-        exit(1);
-    }
 
-    if (mpu6050_read_acc(&mpu6050)) {
-        exit(1);
-    }
-
-    if (mpu6050_read_temp(&mpu6050)) {
+    if (mpu6050_read(&mpu6050)) {
         exit(1);
     }
 

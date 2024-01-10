@@ -44,11 +44,19 @@ int mpu6050_deinit(mpu6050_t *mpu6050) {
 int mpu6050_read_acc(mpu6050_t *mpu6050) {
     uint8_t data[6];
     uint8_t shift;
+    uint8_t int_status;
     int err = 0;
 
     assert(mpu6050);
-
     shift = acc_i16_shift(mpu6050->cfg.acc);
+
+    /* if data_rdy interrupt is enabled, wait for data to be ready */
+    if (mpu6050->cfg.int_enable.data_rdy) {
+        do {
+            err |= mpu6050->dev.read(REG_INT_STATUS, &int_status, 1);
+            mpu6050->dev.sleep(1000); /* 1 ms */
+        } while(!err && !(int_status & 1));
+    }
 
     err |= mpu6050->dev.read(REG_ACCEL_XOUT_H, data, 6);
     mpu6050->data.acc.x = (int16_t)(data[0] << 8 | data[1]) >> shift;
@@ -62,11 +70,19 @@ int mpu6050_read_acc(mpu6050_t *mpu6050) {
 int mpu6050_read_gyro(mpu6050_t *mpu6050) {
     uint8_t data[6];
     uint8_t shift;
+    uint8_t int_status;
     int err = 0;
 
     assert(mpu6050);
-
     shift = gyro_i16_shift(mpu6050->cfg.gyro);
+
+    /* if data_rdy interrupt is enabled, wait for data to be ready */
+    if (mpu6050->cfg.int_enable.data_rdy) {
+        do {
+            err |= mpu6050->dev.read(REG_INT_STATUS, &int_status, 1);
+            mpu6050->dev.sleep(1000); /* 1 ms */
+        } while(!err && !(int_status & 1));
+    }
 
     err |= mpu6050->dev.read(REG_GYRO_XOUT_H, data, 6);
 
@@ -86,6 +102,41 @@ int mpu6050_read_temp(mpu6050_t *mpu6050) {
 
     err |= mpu6050->dev.read(REG_TEMP_OUT_H, data, 2);
     mpu6050->data.temp = (int16_t)(data[0] << 8 | data[1])/34 + 365;
+    return err;
+}
+
+/* combines the operations of read_temp(), read_gyro() and read_acc() */
+/* if data_rdy interrupt is enabled, this will read all data synched */
+int mpu6050_read(mpu6050_t *mpu6050) {
+    uint8_t data[14]; /* gyro + accel + temp */
+    uint8_t shift_gyro, shift_acc, int_status;
+    int err = 0;
+
+    assert(mpu6050);
+
+    shift_gyro = gyro_i16_shift(mpu6050->cfg.gyro);
+    shift_acc = acc_i16_shift(mpu6050->cfg.acc);
+
+    /* if data_rdy interrupt is enabled, wait for data to be ready */
+    if (mpu6050->cfg.int_enable.data_rdy) {
+        do {
+            err |= mpu6050->dev.read(REG_INT_STATUS, &int_status, 1);
+            mpu6050->dev.sleep(1000); /* 1 ms */
+        } while(!err && !(int_status & 1));
+    }
+
+    err |= mpu6050->dev.read(REG_ACCEL_XOUT_H, data, 14);
+    /* 0-5 acc */
+    mpu6050->data.acc.x = (int16_t)(data[0] << 8 | data[1]) >> shift_acc;
+    mpu6050->data.acc.y = (int16_t)(data[2] << 8 | data[3]) >> shift_acc;
+    mpu6050->data.acc.z = (int16_t)(data[4] << 8 | data[5]) >> shift_acc;
+    /* 6-7 temp */
+    mpu6050->data.temp = (int16_t)(data[6] << 8 | data[7])/34 + 365;
+    /* 8-13 gyro */
+    mpu6050->data.gyro.x = ((int16_t)(data[ 8] << 8 | data[ 9]) >> shift_gyro);
+    mpu6050->data.gyro.y = ((int16_t)(data[10] << 8 | data[11]) >> shift_gyro);
+    mpu6050->data.gyro.z = ((int16_t)(data[12] << 8 | data[13]) >> shift_gyro);
+
     return err;
 }
 
