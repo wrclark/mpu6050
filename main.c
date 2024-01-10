@@ -26,6 +26,9 @@ int main() {
         exit(1);
     }
 
+    mpu6050.cfg.gyro = MPU6050_GYRO_FS_2000;
+    mpu6050.cfg.acc = MPU6050_ACC_FS_16G;
+
     /* reset all signal paths */
     /* enable gyro, acc and temp */
     if (i2c_write(REG_SIGNAL_PATH_RESET, 0x07)) {
@@ -60,7 +63,7 @@ int main() {
         exit(1);
     }
 
-    acc = MPU6050_ACC_FS_2G << 3;
+    acc = MPU6050_ACC_FS_16G << 3;
     if (i2c_write(REG_ACCEL_CONFIG, acc)) {
         exit(1);
     }

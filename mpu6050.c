@@ -50,7 +50,7 @@ int mpu6050_read_acc(mpu6050_t *mpu6050) {
     shift = acc_i16_shift(mpu6050->cfg.acc);
 
     err |= mpu6050->dev.read(REG_ACCEL_XOUT_H, data, 6);
-    mpu6050->acc.x = ((int16_t)(data[0] << 8 | data[1])) >> shift;
+    mpu6050->acc.x = (int16_t)(data[0] << 8 | data[1]) >> shift;
     mpu6050->acc.y = (int16_t)(data[2] << 8 | data[3]) >> shift;
     mpu6050->acc.z = (int16_t)(data[4] << 8 | data[5]) >> shift;
 
@@ -60,10 +60,10 @@ int mpu6050_read_acc(mpu6050_t *mpu6050) {
 /* How much to shift down an i16 accel sample depending on full-scale mode set */
 static uint8_t acc_i16_shift(uint8_t fs) {
     switch(fs) {
-        case MPU6050_ACC_FS_2G:  return 2; /* 16384 LSb / g */
+        case MPU6050_ACC_FS_2G:  return 4; /* 16384 LSb / g */
         case MPU6050_ACC_FS_4G:  return 3; /* 8192 LSb / g */
-        case MPU6050_ACC_FS_8G:  return 4; /* 4096 LSb / g */
-        case MPU6050_ACC_FS_16G: return 5; /* 2048 LSb / g */
+        case MPU6050_ACC_FS_8G:  return 2; /* 4096 LSb / g */
+        case MPU6050_ACC_FS_16G: return 1; /* 2048 LSb / g */
         default:                 return 0;
     }
 }
