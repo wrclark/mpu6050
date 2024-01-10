@@ -35,7 +35,7 @@ struct mpu6050_accelerometer {
     int16_t z;
 };
 
-/* deg / s times 10, so 1 decimal */
+/* 1 lsb = 0.1 deg / s */
 struct mpu6050_gyroscope {
     int16_t x;
     int16_t y;
@@ -54,5 +54,6 @@ typedef struct mpu6050 mpu6050_t;
 int mpu6050_init(mpu6050_t *mpu6050);
 int mpu6050_deinit(mpu6050_t *mpu6050);
 int mpu6050_read_acc(mpu6050_t *mpu6050);
+int mpu6050_read_gyro(mpu6050_t *mpu6050);
 
 #endif

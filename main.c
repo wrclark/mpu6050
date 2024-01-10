@@ -8,14 +8,9 @@
 #include "i2c.h"
 
 int main() {
-    uint8_t gyro, acc;
-    uint8_t int_status = 0;
-    uint8_t data[6];
-    int16_t gx, gy, gz;
-    float lsb_conv_gyro;
-    int err = 0;
 
     mpu6050_t mpu6050;
+
     mpu6050.dev.init = i2c_init;
     mpu6050.dev.deinit = i2c_deinit;
     mpu6050.dev.read = i2c_read;
@@ -27,7 +22,7 @@ int main() {
     }
 
     mpu6050.cfg.gyro = MPU6050_GYRO_FS_2000;
-    mpu6050.cfg.acc = MPU6050_ACC_FS_16G;
+    mpu6050.cfg.acc = MPU6050_ACC_FS_2G;
 
     /* reset all signal paths */
     /* enable gyro, acc and temp */
@@ -57,50 +52,33 @@ int main() {
         exit(1);
     }
 
-    gyro = MPU6050_GYRO_FS_250 << 3;
-    lsb_conv_gyro = 131.f;
-    if (i2c_write(REG_GYRO_CONFIG, gyro)) {
+    if (i2c_write(REG_GYRO_CONFIG, mpu6050.cfg.gyro << 3)) {
         exit(1);
     }
 
-    acc = MPU6050_ACC_FS_16G << 3;
-    if (i2c_write(REG_ACCEL_CONFIG, acc)) {
+    if (i2c_write(REG_ACCEL_CONFIG, mpu6050.cfg.acc << 3)) {
         exit(1);
     }
 
     usleep(200 * 1000);
 
 LOOP:
-    do {
-        err |= i2c_read(REG_INT_STATUS, &int_status, 1);
-        usleep(1000);
-    } while(!err && !(int_status & 1));
-
-    if (i2c_read(REG_GYRO_XOUT_H, data, 6)) {
+    if (mpu6050_read_gyro(&mpu6050)) {
         exit(1);
     }
-
-    gx = (data[0] << 8 | data[1]);
-    gy = (data[2] << 8 | data[3]);
-    gz = (data[4] << 8 | data[5]);
-
-    printf("[GYRO °/s] x: % -3.4f y: %-3.4f z: %-3.4f ",
-        (float)(gx)/lsb_conv_gyro,
-        (float)(gy)/lsb_conv_gyro,
-        (float)(gz)/lsb_conv_gyro);
-
-    err = 0;
-    int_status = 0;
 
     if (mpu6050_read_acc(&mpu6050)) {
         exit(1);
     }
 
+    printf("[GYRO °/s] x:%1.d  y:%1.d  z:%1.d ",
+        mpu6050.gyro.x, mpu6050.gyro.y, mpu6050.gyro.z);
+
     printf("[ACC mg] x: %-3d y: %-3d z: %-3d\n",
         mpu6050.acc.x, mpu6050.acc.y, mpu6050.acc.z);
 
-    
-goto LOOP;
+    usleep(100 * 1000);
+    goto LOOP;
 
     i2c_deinit();
 
