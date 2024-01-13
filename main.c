@@ -16,10 +16,19 @@ int main() {
     mpu6050.dev.read = i2c_read;
     mpu6050.dev.write = i2c_write;
     mpu6050.dev.sleep = usleep;
-    
+
     if (mpu6050_init(&mpu6050)) {
         exit(1);
     }
+
+    if (mpu6050_calibrate_gyro(&mpu6050)) {
+        exit(1);
+    }
+
+    printf("[CALIB] G_x=%4.1f, G_y=%4.1f, G_z=%4.1f\n",
+        (float)mpu6050.offset.gyro_x / 10.f,
+        (float)mpu6050.offset.gyro_y / 10.f,
+        (float)mpu6050.offset.gyro_z / 10.f);
 
     mpu6050.cfg.gyro = MPU6050_GYRO_FS_250;
     mpu6050.cfg.acc = MPU6050_ACC_FS_2G;

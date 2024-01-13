@@ -15,6 +15,8 @@
 #define MPU6050_ACC_FS_8G    0x02 /* ± 8g */
 #define MPU6050_ACC_FS_16G   0x03 /* ± 16g */
 
+#define MPU6050_CALIBRATION_SAMPLES 1000
+
 struct mpu6050_dev {
     int (*init)(void);
     int (*write)(uint8_t reg, uint8_t value);
@@ -61,10 +63,21 @@ struct mpu6050_data {
     int16_t temp;
 };
 
+/* calculated offsets to prevent drift etc */
+struct mpu6050_offset {
+    int16_t gyro_x;
+    int16_t gyro_y;
+    int16_t gyro_z;
+    int16_t acc_x;
+    int16_t acc_y;
+    int16_t acc_z;
+};
+
 struct mpu6050 {
     struct mpu6050_dev dev;
     struct mpu6050_config cfg;
     struct mpu6050_data data;
+    struct mpu6050_offset offset;
 };
 
 typedef struct mpu6050 mpu6050_t;
@@ -76,5 +89,6 @@ int mpu6050_read_gyro(mpu6050_t *mpu6050);
 int mpu6050_read_temp(mpu6050_t *mpu6050);
 int mpu6050_read(mpu6050_t *mpu6050);
 int mpu6050_configure(mpu6050_t *mpu6050);
+int mpu6050_calibrate_gyro(mpu6050_t *mpu6050);
 
 #endif

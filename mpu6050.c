@@ -26,6 +26,7 @@ int mpu6050_init(mpu6050_t *mpu6050) {
     
     memset(&mpu6050->cfg, 0, sizeof mpu6050->cfg);
     memset(&mpu6050->data, 0, sizeof mpu6050->data);
+    memset(&mpu6050->offset, 0, sizeof mpu6050->offset);
 
     return err;
 }
@@ -90,6 +91,11 @@ int mpu6050_read_gyro(mpu6050_t *mpu6050) {
     mpu6050->data.gyro.y = (int16_t)(data[2] << 8 | data[3]) >> shift;
     mpu6050->data.gyro.z = (int16_t)(data[4] << 8 | data[5]) >> shift;
 
+    /* Apply offsets from calibration */
+    mpu6050->data.gyro.x += mpu6050->offset.gyro_x;
+    mpu6050->data.gyro.y += mpu6050->offset.gyro_y;
+    mpu6050->data.gyro.z += mpu6050->offset.gyro_z;
+
     return err;
 }
 
@@ -136,6 +142,11 @@ int mpu6050_read(mpu6050_t *mpu6050) {
     mpu6050->data.gyro.x = (int16_t)(data[8] << 8 | data[9]) >> shift_gyro;
     mpu6050->data.gyro.y = (int16_t)(data[10] << 8 | data[11]) >> shift_gyro;
     mpu6050->data.gyro.z = (int16_t)(data[12] << 8 | data[13]) >> shift_gyro;
+
+    /* Apply offsets from calibration */
+    mpu6050->data.gyro.x += mpu6050->offset.gyro_x;
+    mpu6050->data.gyro.y += mpu6050->offset.gyro_y;
+    mpu6050->data.gyro.z += mpu6050->offset.gyro_z;
 
     return err;
 }
@@ -185,6 +196,57 @@ int mpu6050_configure(mpu6050_t *mpu6050) {
     return err;
 }
 
+/* configures the device in the recommended mode for determining calibration */
+/* read gyro N times to determine a constant offset */
+/* this offset is stored in the mpu6050_t struct, */
+/* and is corrected for in all subsequent read operations */
+/* assumes stationary device */
+/* values tend not to change much over time, so can be re-used, */
+/* without calling this function again. */
+/* simply write the known offsets to the `mpu6050.offset' struct */
+int mpu6050_calibrate_gyro(mpu6050_t *mpu6050) {
+    uint8_t data[6];
+    int err = 0;
+    int i;
+    int16_t x, y, z;
+    uint8_t shift;
+    x = y = z = 0;
+
+    assert(mpu6050);
+
+    /* Set clock divider to 0 (1) */
+    err |= mpu6050->dev.write(REG_SMPLRT_DIV, 0);
+    /* Reset gyro */
+    err |= mpu6050->dev.write(REG_SIGNAL_PATH_RESET, 1 << 2);
+    /* Set digital low-pass filter level to 7 */
+    err |= mpu6050->dev.write(REG_CONFIG, 0);
+    /* Set 250 deg mode */
+    err |= mpu6050->dev.write(REG_GYRO_CONFIG, MPU6050_GYRO_FS_250 << 3);
+    /* No sleep */
+    err |= mpu6050->dev.write(REG_PWR_MGMT1, 0);
+
+    mpu6050->dev.sleep(250000); /* 250 ms */
+
+    shift = gyro_i16_shift(MPU6050_GYRO_FS_250);
+
+    for (i=0; i<MPU6050_CALIBRATION_SAMPLES; i++) {
+
+        err |= mpu6050->dev.read(REG_GYRO_XOUT_H, data, 6);
+        if (err) break;
+
+        x = x/2 + (((int16_t)(data[0] << 8 | data[1]) >> shift) / 2);
+        y = y/2 + (((int16_t)(data[2] << 8 | data[3]) >> shift) / 2);
+        z = z/2 + (((int16_t)(data[4] << 8 | data[5]) >> shift) / 2);
+
+        mpu6050->dev.sleep(1000); /* 1 ms */
+    }
+
+    mpu6050->offset.gyro_x = -x;
+    mpu6050->offset.gyro_y = -y;
+    mpu6050->offset.gyro_z = -z;
+
+    return err;
+}
 
 /* How much to shift down an i16 accel sample depending on full-scale mode set */
 static uint8_t acc_i16_shift(uint8_t fs) {
