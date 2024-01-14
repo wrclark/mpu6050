@@ -63,21 +63,10 @@ struct mpu6050_data {
     int16_t temp;
 };
 
-/* calculated offsets to prevent drift etc */
-struct mpu6050_offset {
-    int16_t gyro_x;
-    int16_t gyro_y;
-    int16_t gyro_z;
-    int16_t acc_x;
-    int16_t acc_y;
-    int16_t acc_z;
-};
-
 struct mpu6050 {
     struct mpu6050_dev dev;
     struct mpu6050_config cfg;
     struct mpu6050_data data;
-    struct mpu6050_offset offset;
 };
 
 typedef struct mpu6050 mpu6050_t;
