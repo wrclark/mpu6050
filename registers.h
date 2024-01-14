@@ -1,10 +1,22 @@
 #ifndef REGISTERS_H
 #define REGISTERS_H
 
+#define REG_XA_OFF_USR_H       0x06 /* Accel X offset H */
+#define REG_XA_OFF_USR_L       0x07 /* Accel X offset L */
+#define REG_YA_OFF_USR_H       0x08 /* Accel Y offset H */
+#define REG_YA_OFF_USR_L       0x09 /* Accel Y offset L */
+#define REG_ZA_OFF_USR_H       0x0A /* Accel Z offset H */
+#define REG_ZA_OFF_USR_L       0x0B /* Accel Z offset L */
 #define REG_SELF_TEST_X        0x0D 
 #define REG_SELF_TEST_Y        0x0E 
 #define REG_SELF_TEST_Z        0x0F 
 #define REG_SELF_TEST_A        0x10 
+#define REG_XG_OFF_USR_H       0x13 /* Gyro X offset H */
+#define REG_XG_OFF_USR_L       0x14 /* Gyro X offset L */
+#define REG_YG_OFF_USR_H       0x15 /* Gyro Y offset H */
+#define REG_YG_OFF_USR_L       0x16 /* Gyro Y offset L */
+#define REG_ZG_OFF_USR_H       0x17 /* Gyro Z offset H */
+#define REG_ZG_OFF_USR_L       0x18 /* Gyro Z offset L */
 #define REG_SMPLRT_DIV         0x19 
 #define REG_CONFIG             0x1A 
 #define REG_GYRO_CONFIG        0x1B 

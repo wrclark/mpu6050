@@ -15,7 +15,7 @@
 #define MPU6050_ACC_FS_8G    0x02 /* ± 8g */
 #define MPU6050_ACC_FS_16G   0x03 /* ± 16g */
 
-#define MPU6050_CALIBRATION_SAMPLES 1000
+#define MPU6050_CALIBRATION_SAMPLES 100
 
 struct mpu6050_dev {
     int (*init)(void);
@@ -90,5 +90,6 @@ int mpu6050_read_temp(mpu6050_t *mpu6050);
 int mpu6050_read(mpu6050_t *mpu6050);
 int mpu6050_configure(mpu6050_t *mpu6050);
 int mpu6050_calibrate_gyro(mpu6050_t *mpu6050);
+int mpu6050_reset(mpu6050_t *mpu6050);
 
 #endif
