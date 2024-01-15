@@ -26,7 +26,6 @@ int mpu6050_init(mpu6050_t *mpu6050) {
     
     memset(&mpu6050->cfg, 0, sizeof mpu6050->cfg);
     memset(&mpu6050->data, 0, sizeof mpu6050->data);
-    memset(&mpu6050->offset, 0, sizeof mpu6050->offset);
 
     return err;
 }
@@ -262,8 +261,7 @@ int mpu6050_reset(mpu6050_t *mpu6050) {
     /* enable SIG_COND_RESET */
     err |= mpu6050->dev.write(REG_USER_CTRL, 0x01);
 
-    /* poll PWR_MGMT1 register until MSb is 0, which means */
-    /* the device reset process has finished. */
+    /* poll USER_CTRL register until MSb is 0 */
     do {
         err |= mpu6050->dev.read(REG_USER_CTRL, &sigcond, 1);
         mpu6050->dev.sleep(1000); /* 1 ms */
